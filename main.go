@@ -1,10 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 )
 
 func main() {
+	timeoutArg := os.Args[1]
+	fmt.Println("Timeout arg: ", timeoutArg)
 
 	serveMux := http.NewServeMux()
 
