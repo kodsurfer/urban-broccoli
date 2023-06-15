@@ -18,5 +18,14 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPut:
+		{
+			message := r.URL.Query().Get("v")
+			if message == "" {
+				w.WriteHeader(400)
+			}
+		}
 
+	}
 }
