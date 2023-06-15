@@ -6,15 +6,19 @@ import (
 	"os"
 )
 
+const defaultPort = "8080"
+
 func main() {
-	timeoutArg := os.Args[1]
-	fmt.Println("Timeout arg: ", timeoutArg)
+	port := os.Args[1]
+	if port == "" {
+		port = defaultPort
+	}
 
 	serveMux := http.NewServeMux()
 
 	serveMux.HandleFunc("/", http.HandlerFunc(handler))
 
-	http.ListenAndServe(":8080", serveMux)
+	http.ListenAndServe(fmt.Sprintf(":%s", port), serveMux)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
