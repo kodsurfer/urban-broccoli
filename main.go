@@ -13,9 +13,9 @@ const defaultPort = "8080"
 var mq = make(map[string][]string, 0)
 
 func main() {
-	port := os.Args[1]
-	if port == "" {
-		port = defaultPort
+	port := defaultPort
+	if len(os.Args) > 1 {
+		port = os.Args[1]
 	}
 
 	serveMux := http.NewServeMux()
@@ -30,13 +30,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		{
 			message := r.URL.Query().Get("v")
-			if message != "" {
-				queue := r.URL.Path
-				if _, ok := mq[queue]; !ok {
-					mq[queue] = make([]string, 0)
-					mq[queue] = append(mq[queue], message)
-				}
-			} else {
+			if message == "" {
 				w.WriteHeader(400)
 			}
 		}
