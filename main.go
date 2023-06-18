@@ -10,7 +10,9 @@ import (
 
 const defaultPort = "8080"
 
-var mq = make(map[string][]string, 0)
+type MessageQueue struct {
+	mq map[string][]string
+}
 
 func main() {
 	port := defaultPort
@@ -20,26 +22,33 @@ func main() {
 
 	serveMux := http.NewServeMux()
 
-	serveMux.HandleFunc("/", http.HandlerFunc(handler))
+	serveMux.HandleFunc("/", handler)
 
-	http.ListenAndServe(fmt.Sprintf(":%s", port), serveMux)
+	err := http.ListenAndServe(fmt.Sprintf("127.0.0.1:%s", port), serveMux)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	messageQueue := NewMessageQueue()
+
 	switch r.Method {
 	case http.MethodPut:
 		{
 			message := r.URL.Query().Get("v")
-			if message == "" {
+			if message != "" {
+				queue := r.URL.Path
+				messageQueue.push(queue, message)
+			} else {
 				w.WriteHeader(400)
 			}
 		}
 	case http.MethodGet:
 		queue := r.URL.Path
 
-		if len(mq) > 0 {
-			message := mq[queue][0]
-			mq[queue] = mq[queue][1:]
+		if len(messageQueue.mq) > 0 {
+			message := messageQueue.pop(queue)
 
 			w.Header().Set("Content-Type", "application/json")
 
@@ -55,5 +64,27 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			w.WriteHeader(404)
 		}
+	}
+}
+
+func (mq *MessageQueue) pop(queue string) string {
+	message := mq.mq[queue][0]
+	mq.mq[queue] = mq.mq[queue][1:]
+
+	return message
+}
+
+func (mq *MessageQueue) push(queue string, message string) {
+	_, ok := mq.mq[queue]
+	if ok {
+		mq.mq[queue] = append(mq.mq[queue], message)
+	} else {
+		mq.mq[queue] = append(make([]string, 0), message)
+	}
+}
+
+func NewMessageQueue() *MessageQueue {
+	return &MessageQueue{
+		mq: make(map[string][]string, 0),
 	}
 }
